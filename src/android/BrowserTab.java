@@ -102,12 +102,23 @@ public class BrowserTab extends CordovaPlugin {
     }
 
     Intent customTabsIntent = new CustomTabsIntent.Builder().build().intent;
-    customTabsIntent.setData(Uri.parse(urlStr));
-    customTabsIntent.setPackage(mCustomTabsBrowser);
-    cordova.getActivity().startActivity(customTabsIntent);
 
-    Log.d(LOG_TAG, "in app browser call dispatched");
-    callbackContext.success();
+    // Added call to mayLaunchUrl to resolve DNS
+    customTabsIntent.mayLaunchUrl(Uri.parse(urlStr));
+
+    // Load URL after 2 seconds
+    final Handler handler = new Handler(Looper.getMainLooper());
+    handler.postDelayed(new Runnable() {
+      @Override
+      public void run() {
+        customTabsIntent.setData(Uri.parse(urlStr));
+        customTabsIntent.setPackage(mCustomTabsBrowser);
+        cordova.getActivity().startActivity(customTabsIntent);
+
+        Log.d(LOG_TAG, "in app browser call dispatched");
+        callbackContext.success();
+      }
+    }, 2000);
   }
 
   private String findCustomTabBrowser() {
