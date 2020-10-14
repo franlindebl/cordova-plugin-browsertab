@@ -34,8 +34,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.graphics.Color;
-
 /**
  * Cordova plugin which provides the ability to launch a URL in an
  * in-app browser tab. On Android, this means using the custom tabs support
@@ -46,8 +44,6 @@ public class BrowserTab extends CordovaPlugin {
   public static final int RC_OPEN_URL = 101;
 
   private static final String LOG_TAG = "BrowserTab";
-
-  private Color colorParser = new Color();
 
   /**
    * The service we expect to find on a web browser that indicates it supports custom tabs.
@@ -105,31 +101,13 @@ public class BrowserTab extends CordovaPlugin {
       callbackContext.error("no in app browser tab implementation available");
     }
 
-    // Initialize Builder
-    CustomTabsIntent.Builder customTabsIntentBuilder = new CustomTabsIntent.Builder();
+    Intent customTabsIntent = new CustomTabsIntent.Builder().build().intent;
+    customTabsIntent.setData(Uri.parse(urlStr));
+    customTabsIntent.setPackage(mCustomTabsBrowser);
+    cordova.getActivity().startActivity(customTabsIntent);
 
-    // Set tab color
-    String tabColor = cordova.getActivity().getString(cordova.getActivity().getResources().getIdentifier("CUSTOM_TAB_COLOR_RGB", "string", cordova.getActivity().getPackageName()));
-    customTabsIntentBuilder.setToolbarColor(colorParser.parseColor(tabColor));
-
-    // Create Intent
-    CustomTabsIntent customTabsIntent = customTabsIntentBuilder.build();
-
-    // Added call to mayLaunchUrl to resolve DNS
-    customTabsIntent.mayLaunchUrl(Uri.parse(urlStr));
-
-    // Load URL after 2 seconds
-    final Handler handler = new Handler(Looper.getMainLooper());
-    handler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        // Open customtab
-        customTabsIntent.launchUrl(cordova.getActivity(), Uri.parse(urlStr));
-
-        Log.d(LOG_TAG, "in app browser call dispatched");
-        callbackContext.success();
-      }
-    }, 2000);
+    Log.d(LOG_TAG, "in app browser call dispatched");
+    callbackContext.success();
   }
 
   private String findCustomTabBrowser() {
